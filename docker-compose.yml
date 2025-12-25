@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  health-app:
+    build: .
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      # データベースファイルをコンテナ外に保存
+      - db_data:/app/data
+
+volumes:
+  db_data:

@@ -4,7 +4,7 @@ services:
   health-app:
     build: .
     ports:
-      - "8501:8501"
+      - "8000:8000"
     env_file:
       - .env
     volumes:

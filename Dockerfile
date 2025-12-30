@@ -20,8 +20,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 6. アプリケーションコードをコピー
 COPY app.py .
 
-# 7. Streamlit用のポート（8501）を開放
-EXPOSE 8501
+# 7. FastAPI用のポート（8000）を開放
+EXPOSE 8000
 
-# 8. コンテナ起動時にStreamlitを実行する設定
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# 8. コンテナ起動時にFastAPIを実行する設定
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

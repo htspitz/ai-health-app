@@ -4,5 +4,4 @@ __pycache__/
 .DS_Store
 data/
 node_modules/
-test_api.py
-check_mask.py
+test_code/

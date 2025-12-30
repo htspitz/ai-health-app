@@ -15,6 +15,7 @@
 - **Natural Language Processing**: GiNZA / spaCy (ja_ginza)
 - **Database**: SQLite / SQLAlchemy
 - **Container**: Docker / Docker Compose
+- **editor**: GithubCopilot / Cursol / Cline
 
 ## 📂 フォルダ構成
 - `app.py`: Streamlit フロントエンド

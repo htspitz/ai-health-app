@@ -2,9 +2,8 @@ from regex import E
 import spacy
 import re
 import os
-from langchain_anthropic import ChatAnthropic
-from langchain_core.prompts import ChatPromptTemplate
 import requests
+import json
 
 nlp = spacy.load("ja_ginza")
 
@@ -23,18 +22,39 @@ def mask_entities(text):
     masked_text = re.sub(blood_pressure, '[BP_VALUE]', masked_text)
     return masked_text
 
-
+# 環境変数からモデル名を取得
+MODEL_NAME = os.getenv("AI_MODEL_NAME", "qwen2.5:3b")
 # Docker内部からホストPCのOllamaを呼ぶための魔法のURL
-OLLAMA_URL = "http://host.docker.internal:11434/api/generate"
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434/api/generate")
 
-def ask_ai(user_input: str) -> str:
-    prompt = f"""あなたは優秀な保健師です。個人情報がマスキングされた健康診断結果を受け取り、ユーザーに寄り添ったポジティブな要約と改善アドバイスを提供してください。
+def ask_ai(user_input: str, history: list = None) -> str:
+    # 履歴をテキスト化する
+    history_context = ""
+    if history:
+        history_context = "\n### 過去の相談履歴:\n"
+        # 古い順に並べてコンテキスト化
+        for h in reversed(history):
+            history_context += f"- 相談: {h.input_text}\n アドバイス: {h.ai_summary}\n"
+            
+    # プロンプトの組み立て
+    prompt = f"""あなたは親切な健康アドバイザーです。
+    過去の履歴がある場合は、それらを踏まえて変化を褒めたり、継続的な改善を促してください。
+    個人情報がマスキングされた健康診断結果を受け取り、ユーザーに寄り添ったポジティブな要約と改善アドバイスを提供してください。
+    {history_context}
+    ### 今回のデータ:
+    {user_input}
 
-    以下のデータを要約してください：{user_input}
+    ### アドバイス:
     """
 
+    # --- ここに追加！ ---
+    print("\n--- [DEBUG] 実際に送信されるプロンプト ---")
+    print(prompt)
+    print("----------------------------------------\n")
+    # ------------------
+
     payload = {
-        "model": "qwen2.5:3b",
+        "model": MODEL_NAME,
         "prompt": prompt,
         "stream": False
     }
@@ -46,21 +66,3 @@ def ask_ai(user_input: str) -> str:
         return data.get("response", "申し訳ありませんが、要約の生成に失敗しました。")
     except Exception as e:
         return f"Error communicating with Ollama: {str(e)}"
-    
-
-
-'''
-def summarize_with_ai(cleaned_text, model_choice):
-    # 環境変数から直接取ってきて、明示的に渡す
-    # api_key = os.getenv("ANTHROPIC_API_KEY")
-    """AIによる要約生成"""
-    target_model = "claude-sonnet-4-5" if "Sonnet" in model_choice else "claude-haiku-4-5"
-    llm = ChatAnthropic(model=target_model, temperature=0)
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "あなたは優秀な保健師です。個人情報がマスキングされた健康診断結果を受け取り、ユーザーに寄り添ったポジティブな要約と改善アドバイスを提供してください。"),
-        ("user", "以下のデータを要約してください：\n\n{data}")
-    ])
-    chain = prompt | llm
-    response = chain.invoke({"data": cleaned_text})
-    return response.content
-'''

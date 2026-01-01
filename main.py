@@ -10,11 +10,16 @@ app = FastAPI()
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_health_data(request: AnalysisRequest):
     try:
-        # 1. AIによる匿名化と要約生成
+        # 1. 匿名化処理
         masked = eng.mask_entities(request.input_text)
-        summary = eng.ask_ai(masked)
 
-        # 2. データベースに保存
+        # 2. 【追加】AIに渡すための「過去の履歴」をDBから取得
+        past_history = db.get_chat_history(limit=3) 
+        
+        # 3. AIによる要約生成（履歴を渡す）
+        summary = eng.ask_ai(masked, history=past_history)
+
+        # 4. 今回の結果をデータベースに保存
         db.save_record(
             user_name=request.user_name,
             input_text=request.input_text,

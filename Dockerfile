@@ -18,10 +18,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 6. アプリケーションコードをコピー
-COPY app.py .
+COPY main.py .
 
 # 7. FastAPI用のポート（8000）を開放
 EXPOSE 8000
 
 # 8. コンテナ起動時にFastAPIを実行する設定
-ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

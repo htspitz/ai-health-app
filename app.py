@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 # FastAPIのURL（ドッカーで動かしている窓口）
-BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = "http://backend:8000"
 
 st.set_page_config(page_title="AI健康診断要約アプリ", layout="wide")
 

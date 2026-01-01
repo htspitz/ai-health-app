@@ -1,16 +1,71 @@
 version: '3.8'
 
 services:
-  health-app:
-    build: .
+
+  # 1. Backend(FastAPI)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - AI_MODEL_NAME=${AI_MODEL_NAME}
+      - OLLAMA_URL=${OLLAMA_URL}
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    networks:
+      - app-network
     volumes:
       - .:/app
-      # データベースファイルをコンテナ外に保存
       - db_data:/app/data
+  # 依存関係：ollamaが起動してから開始
+    depends_on:
+      - ollama
+
+  # 2. Frontend(Streamlit)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0 --server.enableCORS false --server.enableXsrfProtection false
+    ports:
+      - "8501:8501"
+    networks:
+      - app-network
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+      
+  # 3. AI Engine(Ollama)
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - app-network
+    volumes:
+      - ollama_data:/root/.ollama
+
+  # 4. Nginx Proxy Manager
+  nginx-proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '81:81'
+    networks:
+      - app-network
+    volumes:
+      - ./nginx_data:/data
+      - ./letsencrypt:/etc/letsencrypt
 
 volumes:
   db_data:
+  ollama_data:
+
+networks:
+  app-network:
+    driver: bridge

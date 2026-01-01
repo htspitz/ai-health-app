@@ -1,0 +1,10 @@
+.venv
+bin
+include
+lib
+share
+__pycache__
+*.db
+.git
+data/
+ollama_data/
